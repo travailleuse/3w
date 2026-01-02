@@ -1,222 +1,245 @@
-class IndexConfig {
-    #name = null
-    #unique = false
-    constructor(name, unique = false) {
-        this.#name = name
-        this.#unique = unique
+/**
+ * @abstract
+ */
+class CanStore {
+    /**
+     * returns the keyPath for the object store
+     * 
+     * @throws {Error} if not implemented by subclass
+     * @returns {string}
+     */
+    static keyPath() {
+        throw new Error("This is an abstract method and must be implemented by subclasses.");
     }
 
-    get name() {
-        return this.#name
+    /**
+     * returns whether the keyPath is autoIncrement
+     * 
+     * @throws {Error} if not implemented by subclass
+     * @returns {boolean}
+     */
+    static autoIncrement() {
+        throw new Error("This is an abstract method and must be implemented by subclasses.");
     }
 
-    get unique() {
-        return this.#unique
+    /**
+     * returns the indices for the object store
+     * 
+     * @throws {Error} if not implemented by subclass
+     * @returns {Iterable<IndexedDBIndexConfig>}
+     */
+    static indices() {
+        throw new Error("This is an abstract method and must be implemented by subclasses.");
     }
 }
 
-class CanStored {
-    static get keyPath() {
-        return null
-    }
-
-    static get generator() {
-        return null
-    }
-
-    static get indexes() {
-        return null
-    }
-}
-
-class ObjectStoreConfig {
-    #storedClass = null
+/**
+ * @class IndexedDBConfig
+ * @description Configuration class for IndexedDB setup
+ */
+class IndexedDBConfig {
+    /**
+     * @type {Set<new(...args:any[]) => CanStore>} store classes to be used in the IndexedDB
+     */
+    #storeClass;
     constructor() {
-        this.#storedClass = new Set();
+        this.#storeClass = new Set();
     }
 
-    get storedClasses() {
-        return this.#storedClass
-    }
-
-    add(cls) {
-        if (cls.prototype instanceof CanStored === false) {
-            throw new TypeError("cls must be a subclass of StoreClass")
-        }
-        this.#storedClass.add(cls)
-        return this
-    }
-}
-
-
-class IndexedDBClient {
-    #name = null
-    #version = null
-    #config = null
-    #db = null
-    constructor(name, version, config) {
-        this.#name = name;
-        this.#version = version;
-        this.#config = config;
-        const a = getIndexDbInstance(this.#name, this.#version);
-        a(config).then(db => {
-            console.log("DB opened successfully:", db);
-            this.#db = db;
-        }).catch(error => {
-            console.error("Error opening DB:", error);
+    /**
+     * add a store class to the config
+     * @param {...(new(...args:any[]) => CanStore)} storeClass storeClass 
+     * @returns {IndexedDBConfig} for chaining calls
+     */
+    add(...storeClass) {
+        storeClass.forEach(cls => {
+            if (!(cls.prototype instanceof CanStore)) {
+                throw new Error("storeClass must be a subclass of CanStore");
+            }
+            this.#storeClass.add(cls)
+            return this;
         });
     }
 
-    async getDB(config) {
-        const a = getIndexDbInstance(this.#name, this.#version);
-        return await a(config);
-    }
-    check(obj) {
-        if (obj instanceof CanStored === false) {
-            throw new TypeError("obj must be an instance of StoreClass")
-        }
-    }
-
-    async add(obj) {
-        this.check(obj);
-        const db = await this.getDB(this.#config);
-        db.transaction([obj.constructor.name], "readwrite").objectStore(obj.constructor.name).add(obj);
-    }
-
-    async remove(obj) {
-        this.check(obj);
-        const db = await this.getDB(this.#config);
-        const req = db.transaction([obj.constructor.name], "readwrite").objectStore(obj.constructor.name).delete(obj.id);
-
-        return new Promise((resolve, reject) => {
-            req.onsuccess = e => {
-                resolve(e.target.result)
-            }
-
-            req.onerror = e => {
-                reject(e.error)
-            }
-        });
-
+    /**
+     * @return {Set<new(...args:any[]) => CanStore>} get the store classes
+     */
+    get classes() {
+        return this.#storeClass;
     }
 }
 
-function getIndexDbInstance(name, version) {
-    let db = null
-    const _getDB = async (config) => {
+/**
+ * @class IndexDbIndexConfig
+ * @description Configuration class for IndexedDB index
+ */
+class IndexDbIndexConfig {
+    /**
+     * @param {string} name 
+     * @param {boolean} unique 
+     */
+    constructor(name, unique) {
+        this.name = name;
+        this.unique = unique;
+    }
+}
+
+/**
+ * Creates a function that returns a singleton IndexedDB instance.
+ * 
+ * @param {string} dbName 
+ * @param {number} version
+ * @param {IndexedDBConfig} config
+ * @returns {() => Promise<IDBDatabase>} an IndexedDB instance
+ */
+const createDbFunction = (dbName, version, config) => {
+    /**
+     * @type {IDBDatabase|null}
+     */
+    let db = null;
+    const getIndexDbInstance = () => {
         if (db) {
-            return Promise.resolve(db)
+            return Promise.resolve(db);
         }
-
-        if (!name || typeof name !== 'string') {
-            Promise.reject(new TypeError("DB name must be a non-empty string"));
-            return;
-        }
-
-        if (!config || config && !(config instanceof ObjectStoreConfig)) {
-            Promise.reject(new TypeError("config must be an instance of ObjectStoreConfig"));
-            return;
-        }
-
+        const req = indexedDB.open(dbName, version);
         return new Promise((resolve, reject) => {
-            if (!window.indexedDB) {
-                reject(new Error("Your brower don\'t support Indexed DB"));
-                return;
-            }
-
-            const req = window.indexedDB.open(name, version);
-
             req.onsuccess = e => {
-                db = e.target.result
-                resolve(e.target.result)
-            }
+                db = e.target.result;
+                resolve(db)
+            };
 
             req.onupgradeneeded = e => {
-                db = e.target.result
-                config.storedClasses.forEach(cls => {
+                db = e.target.result;
+                config.classes.forEach(cls => {
                     const storeName = cls.name;
-                    if (!db.objectStoreNames.contains(storeName)) {
-                        let store = db.createObjectStore(storeName, {
-                            keyPath: cls.keyPath,
-                            autoIncrement: cls.generator
-                        });
-                        if (cls.indexes) {
-                            cls.indexes.forEach(index => {
-                                store.createIndex(index.name, index.name, { unique: index.unique });
-                            });
-                        }
-                    }
+                    const keyPath = cls.keyPath();
+                    const autoIncrement = cls.autoIncrement();
+                    const indices = cls.indices();
+                    const store = db.createObjectStore(storeName, { keyPath, autoIncrement });
+                    indices.forEach(index => {
+                        store.createIndex(index.name, index.name, { unique: index.unique });
+                    })
                 })
             }
+
             req.onerror = e => {
                 reject(e.target.error);
-            }
+            };
+        })
+    }
+    return getIndexDbInstance;
+}
+
+/**
+ * @class IndexDbClient
+ * @description Client class for IndexedDB
+ */
+class IndexDbClient {
+    #dbName;
+    /**
+     * @type {number}
+     */
+    #version;
+    /**
+     * @type {IndexedDBConfig}
+     */
+    #config;
+    /**
+     * @type {IDBDatabase|null}
+     */
+    #db;
+    /**
+     * 
+     * @param {string} dbName the name of the IndexedDB
+     * @param {string} version the version of the IndexedDB
+     * @param {IndexedDBConfig} config the configuration for the IndexedDB, which contains the store classes
+     */
+    constructor(dbName, version, config) {
+        this.#dbName = dbName;
+        this.#version = version;
+        this.#config = config;
+        createDbFunction(dbName, version, config)().then(db => {
+            this.#db = db;
         });
     }
-    return _getDB
+
+    /**
+     * 
+     * @param {any} obj
+     * @returns {} the checked object 
+     */
+    check(obj) {
+        if (!(obj instanceof CanStore)) {
+            throw new Error("obj must be an instance of CanStore");
+        }
+    }
+    /**
+     * 
+     * @param  {...CanStore} objs 
+     * @returns {Promise<any[]>}
+     */
+    async add(...objs) {
+        if(this.#db) {
+            this.add = async (...objs) => {
+                return Promise.all(objs.map(obj => {
+                    this.check(obj);
+                    const storeName = obj.constructor.name;
+                    const tx = this.#db.transaction(storeName, "readwrite");
+                    const store = tx.objectStore(storeName);
+                    const req =  store.add(obj);
+                    return new Promise((resolve, reject) => {
+                        req.onsuccess = e => {
+                            resolve(e.target.result);
+                        }
+
+                        req.onerror = e => {
+                            reject(e.target.error);
+                        };
+
+                        tx.oncomplete = () => {
+                            resolve(obj);
+                        }
+                    })
+                }))
+            }
+            this.add(...objs);
+        } else {
+            await createDbFunction(this.#dbName, this.#version, this.#config)().then(db => {
+                this.#db = db;
+            });
+            return this.add(...objs);
+        }
+    }
+
+    /**
+     * returns all instances of a class
+     * 
+     * @param {new(...args:any[]) => CanStore} cls 
+     * @returns {Promise<Iterable<CanStore>>}
+     */
+    async getAll(cls) {
+        if(this.#db) {
+            this.getAll = async (cls) => {
+                const storeName = cls.name;
+                const tx = this.#db.transaction(storeName, "readonly");
+                const store = tx.objectStore(storeName);
+                const req = store.getAll();
+                return new Promise((resolve, reject) => {
+                    req.onsuccess = e => {                        
+                        resolve(e.target.result);   
+                    }
+
+                    req.onerror = e => {
+                        reject(e.target.error);
+                    };
+                })
+            }
+            return this.getAll(cls);
+        } else {
+            await createDbFunction(this.#dbName, this.#version, this.#config)().then(db => {
+                this.#db = db;
+            });
+            return this.getAll(cls);
+        }
+    }
 }
-
-class Person extends CanStored {
-    constructor(name, gender, birthAt) {
-        super();
-        this.name = name;
-        this.gender = gender;
-        this.birthAt = birthAt;
-    }
-
-    static get keyPath() {
-        return "id";
-    }
-
-    static get generator() {
-        return true
-    }
-
-    static get indexes() {
-        const nameConfig = new IndexConfig("name", true);
-        const birthAtConfig = new IndexConfig("birthAt", false);
-        const genderConfig = new IndexConfig("gender", false);
-        return [nameConfig, birthAtConfig, genderConfig];
-    }
-}
-
-class Course extends CanStored {
-    constructor(name, description) {
-        super();
-        this.name = name;
-        this.description = description;
-    }
-
-    static get keyPath() {
-        return "id";
-    }
-
-    static get generator() {
-        return true;
-    }
-
-    static get indexes() {
-        const nameConfig = new IndexConfig("name", true);
-        const descriptionConfig = new IndexConfig("description", false);
-        return [nameConfig, descriptionConfig];
-    }
-}
-
-class Log extends CanStored {
-
-    constructor(message, object, timestamp) {
-        super();
-        this.message = message;
-        this.timestamp = timestamp;
-    }
-}
-
-const config = new ObjectStoreConfig();
-config.add(Person);
-config.add(Course);
-
-const client = new IndexedDBClient("test", 1, config);
-console.log(client);
-client.add(new Person("John Doe", "Male", new Date("1990-01-01")));
-client.add(new Course("Mathematics", "Advanced math course"));
-

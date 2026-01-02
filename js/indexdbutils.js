@@ -30,25 +30,25 @@ class CanStored {
 }
 
 class ObjectStoreConfig {
-    #stores = null
+    #storedClass = null
     constructor() {
-        this.#stores = new Set();
+        this.#storedClass = new Set();
     }
 
-    get stores() {
-        return this.#stores
+    get storedClasses() {
+        return this.#storedClass
     }
 
     add(cls) {
         if (cls.prototype instanceof CanStored === false) {
             throw new TypeError("cls must be a subclass of StoreClass")
         }
-        this.#stores.add(cls)
+        this.#storedClass.add(cls)
         return this
     }
 }
 
-let y = null
+
 class IndexedDBClient {
     #name = null
     #version = null
@@ -89,11 +89,11 @@ class IndexedDBClient {
         const req = db.transaction([obj.constructor.name], "readwrite").objectStore(obj.constructor.name).delete(obj.id);
 
         return new Promise((resolve, reject) => {
-            req.onsuccess = e=>{
+            req.onsuccess = e => {
                 resolve(e.target.result)
             }
-            
-            req.onerror = e=>{
+
+            req.onerror = e => {
                 reject(e.error)
             }
         });
@@ -123,7 +123,7 @@ function getIndexDbInstance(name, version) {
                 reject(new Error("Your brower don\'t support Indexed DB"));
                 return;
             }
-            
+
             const req = window.indexedDB.open(name, version);
 
             req.onsuccess = e => {
@@ -133,7 +133,7 @@ function getIndexDbInstance(name, version) {
 
             req.onupgradeneeded = e => {
                 db = e.target.result
-                config.stores.forEach(cls => {
+                config.storedClasses.forEach(cls => {
                     const storeName = cls.name;
                     if (!db.objectStoreNames.contains(storeName)) {
                         let store = db.createObjectStore(storeName, {
@@ -199,6 +199,15 @@ class Course extends CanStored {
         const nameConfig = new IndexConfig("name", true);
         const descriptionConfig = new IndexConfig("description", false);
         return [nameConfig, descriptionConfig];
+    }
+}
+
+class Log extends CanStored {
+
+    constructor(message, object, timestamp) {
+        super();
+        this.message = message;
+        this.timestamp = timestamp;
     }
 }
 

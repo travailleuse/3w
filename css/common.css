@@ -1,0 +1,38 @@
+* {
+    box-sizing: border-box;
+    user-select:none;
+}
+
+table {
+    counter-set: table-index 0;
+    user-select: none;
+}
+
+table,tr,td,th {
+    border-collapse: collapse;
+    border-width: 1px;
+    border-color: black;
+    border-style: solid;
+    text-align: center;
+    padding: 1em 1em;
+}
+
+table > tbody > tr::before {
+    counter-increment: table-index;
+    display: table-cell;
+    content: counter(table-index);
+    padding: 1em 1em;
+    vertical-align: middle;
+}
+
+table > thead > tr[util-id]::before{
+    content: attr(util-id);
+    font-weight: bold;
+    display: table-cell;
+    padding: 1em 1em;
+    vertical-align: middle;
+}
+
+
+
+

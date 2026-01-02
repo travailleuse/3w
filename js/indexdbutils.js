@@ -176,17 +176,17 @@ class IndexDbClient {
     /**
      * 
      * @param  {...CanStore} objs 
-     * @returns {Promise<any[]>}
+     * @returns {Promise<Iterable<CanStore>>}
      */
     async add(...objs) {
-        if(this.#db) {
+        if (this.#db) {
             this.add = async (...objs) => {
                 return Promise.all(objs.map(obj => {
                     this.check(obj);
                     const storeName = obj.constructor.name;
                     const tx = this.#db.transaction(storeName, "readwrite");
                     const store = tx.objectStore(storeName);
-                    const req =  store.add(obj);
+                    const req = store.add(obj);
                     return new Promise((resolve, reject) => {
                         req.onsuccess = e => {
                             resolve(e.target.result);
@@ -215,31 +215,38 @@ class IndexDbClient {
      * returns all instances of a class
      * 
      * @param {new(...args:any[]) => CanStore} cls 
-     * @returns {Promise<Iterable<CanStore>>}
+     * @returns {AsyncGenerator<CanStore, void, unknown>} a generator that yields all instances of the class
      */
-    async getAll(cls) {
-        if(this.#db) {
-            this.getAll = async (cls) => {
-                const storeName = cls.name;
-                const tx = this.#db.transaction(storeName, "readonly");
-                const store = tx.objectStore(storeName);
-                const req = store.getAll();
-                return new Promise((resolve, reject) => {
-                    req.onsuccess = e => {                        
-                        resolve(e.target.result);   
-                    }
+    async *getAll(cls) {
+        if (!(cls.prototype instanceof CanStore)) {
+            throw new Error("cls must be a subclass of CanStore");
+        }
 
-                    req.onerror = e => {
-                        reject(e.target.error);
-                    };
-                })
-            }
-            return this.getAll(cls);
-        } else {
-            await createDbFunction(this.#dbName, this.#version, this.#config)().then(db => {
-                this.#db = db;
+        if (!this.#db) {
+            this.#db = await createDbFunction(
+                this.#dbName,
+                this.#version,
+                this.#config
+            )();
+        }
+
+        const storeName = cls.name;
+        const tx = this.#db.transaction(storeName, "readonly");
+        const store = tx.objectStore(storeName);
+
+        let request = store.openCursor();
+
+        while (true) {
+            const cursor = await new Promise((resolve, reject) => {
+                request.onsuccess = e => resolve(e.target.result);
+                request.onerror = e => reject(e.target.error);
             });
-            return this.getAll(cls);
+
+            if (!cursor) {
+                break;
+            }
+            yield cursor.value;
+            cursor.continue();
         }
     }
 }

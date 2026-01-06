@@ -1,6 +1,6 @@
-* {
+table * {
     box-sizing: border-box;
-    user-select:none;
+    user-select: none;
 }
 
 table {
@@ -36,3 +36,10 @@ table > thead > tr[util-id]::before{
 
 
 
+h1{
+    text-align: center;
+}
+
+p{
+    text-indent: 2em;
+}

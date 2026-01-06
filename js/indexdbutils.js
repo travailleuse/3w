@@ -229,24 +229,62 @@ class IndexDbClient {
                 this.#config
             )();
         }
+         this.getAll = async function* () {
+            const storeName = cls.name;
+            const tx = this.#db.transaction(storeName, "readonly");
+            const store = tx.objectStore(storeName);
 
-        const storeName = cls.name;
-        const tx = this.#db.transaction(storeName, "readonly");
-        const store = tx.objectStore(storeName);
+            let request = store.openCursor();
 
-        let request = store.openCursor();
+            while (true) {
+                const cursor = await new Promise((resolve, reject) => {
+                    request.onsuccess = e => resolve(e.target.result);
+                    request.onerror = e => reject(e.target.error);
+                });
 
-        while (true) {
-            const cursor = await new Promise((resolve, reject) => {
-                request.onsuccess = e => resolve(e.target.result);
-                request.onerror = e => reject(e.target.error);
-            });
-
-            if (!cursor) {
-                break;
+                if (!cursor) {
+                    break;
+                }
+                yield cursor.value;
+                cursor.continue();
             }
-            yield cursor.value;
-            cursor.continue();
         }
+
+        yield* this.getAll(cls);
     }
 }
+class Person extends CanStore {
+    constructor(name, gender) {
+        super();
+        this.name = name;
+        this.gender = gender;
+    }
+
+
+    static keyPath() {
+        return "id";
+    }
+
+    static autoIncrement() {
+        return true;
+    }
+
+    static indices() {
+        return[
+            new IndexDbIndexConfig("name", false),
+            new IndexDbIndexConfig("gender", false)
+        ]
+    }
+}
+const config = new IndexedDBConfig();
+config.add(Person);
+const client = new IndexDbClient("test", 1, config);
+const all = client.getAll(Person);
+
+async function test() {
+    for await (const person of all) {
+        console.log(person);
+    }
+}
+
+test();

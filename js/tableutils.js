@@ -70,26 +70,23 @@ class Table {
         this.#tfoot = tfoot;
     }
 
+    /**
+     * 
+     * @param {{fields:string[]}} config 
+     */
     init(config) {
-        // this.#table.style.width = config.width;
-        // this.#table.style.border = config.border ? "1px solid black" : "none";
-        // this.#table.style.borderCollapse = config.borderCollapse ? "collapse" : "separate";
-        // this.#table.style.borderStyle = config.borderStyle;
-        // this.#table.style.borderWidth = config.borderWidth;
-        // this.#table.style.borderColor = config.borderColor;
-        // this.#table.style.padding = config.padding;
-        // this.#table.style.textAlign = config.textAlign;
-        // this.#table.style.userSelect = config.userSelect;
-        // this.#caption.style.textAlign = config.textAlign;
         let thead = this.#thead;
         let tr = document.createElement("tr");
-        config.fileds.forEach(field => {
+        config.fields.forEach(field => {
             let th = document.createElement("th");
-            th.textContent = field;
-            th.style.textAlign = config.textAlign;
+            th.innerText = field;
             tr.appendChild(th);
         });
         thead.appendChild(tr);
+    }
+
+    mount(app) {
+        app.appendChild(this.#table);
     }
 
     get table() {
@@ -97,28 +94,3 @@ class Table {
     }
 
 }
-
-let app = document.getElementById('app');
-
-const table = new Table("person");
-table.init({
-    width: "100%",
-    backgroundColor: "white",
-    border: true,
-    borderCollapse: true,
-    borderStyle: "solid",
-    borderWidth: "1px",
-    borderColor: "black",
-    padding: "1em 1em",
-    textAlign: "center",
-    userSelect: "none",
-    fileds: [
-        'id',
-        'name',
-        'gender'
-    ]
-
-});
-console.log(table);
-
-app.append(table.table);

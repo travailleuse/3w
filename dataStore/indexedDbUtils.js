@@ -7,36 +7,45 @@
  * @copyright Copyright (c) 2026 travailleuse
  */
 
-/**
- * 
- * @param {string} name 
- * @param {number} version 
- * @param {Array<string>} config 
- * @returns {Promise<IDBDatabase>}
- */
-const createDbIntance = async (name, version, config)=> {
-    let db = null;
-    const getDb = ()=> {
-        const req = indexedDB.open(name, version);
-        return new Promise((resolve, reject) => {
-            req.onsuccess = e => {
-                db = e.target.result;
-                resolve(db);
-            };
+class IndexDbManager {
+    static #name2db = new Map();
 
-            req.onupgradeneeded = e => {
-                db = e.target.result;
-                console.log(`oldVersion: ${e.oldVersion}, newVersion: ${e.newVersion}`)
-                config.forEach(ele => {
-                    db.createObjectStore(ele, {keyPath: 'id', autoIncrement: true});
-                })
-            }
-
-            req.onerror = e => reject(e.target.error);
-        })
+    /**
+     * @typedef {{name: string, version:number}} T
+     * 
+     * @returns {Promise<Array<T>>}
+     */
+    static showDb() {
+        return indexedDB.databases();
     }
-    return getDb();
+    /**
+     * 
+     * @param {string} name 
+     * @param {null} version 
+     * @param {*} config 
+     * @returns {Promise<IDBDatabase>}
+     */
+    static async createDbIntance(name, version, config) {
+        let db = null;
+        const getDb = () => {
+            const req = indexedDB.open(name, version);
+            return new Promise((resolve, reject) => {
+                req.onsuccess = e => {
+                    this.#name2db.set(name, e.target.result);
+                    db = e.target.result;
+                    resolve(db);
+                };
+
+                req.onupgradeneeded = e => {
+                    db = e.target.result;
+                    config.forEach(ele => {
+                        db.createObjectStore(ele, { keyPath: 'id', autoIncrement: true });
+                    })
+                }
+
+                req.onerror = e => reject(e.target.error);
+            })
+        }
+        return getDb();
+    }
 }
-
-const showDb = async () => indexedDB.databases();
-

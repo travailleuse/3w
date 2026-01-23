@@ -1,1 +1,12 @@
 .vscode/**
+.idea/**
+./node_modules/**
+./dist/**
+./coverage/**
+./build/**
+*.log
+*.tmp
+.DS_Store
+.env
+**/.DS_Store
+**/package-lock.json

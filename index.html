@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+</head>
+
+<body>
+    <script src="./dataStore/indexedDbUtils.js"></script>
+    <script>
+        let config = [
+            'name_xx',
+            "user_info_xx"
+        ]
+        const y = async () => {
+            let p1 = await createDbIntance("test", 1, config);
+            let p2 = await createDbIntance("test2", 1, config);
+            console.log(p1);
+            let dbs = await showDb();
+            console.log(dbs);
+        }
+        y();
+    </script>
+</body>
+
+</html>

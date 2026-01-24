@@ -8,23 +8,20 @@
 </head>
 
 <body>
+    <table id="dbTable">
+        <caption>DB Table</caption>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Version</th>
+            </tr>
+        </thead>
+        <tbody id=dBTableBody>
+        </tbody>
+    </table>
     <script src="./dataStore/indexedDbUtils.js"></script>
     <script>
-        let config = [
-            'name_xx',
-            "user_info_xx"
-        ]
-        const y = async () => {
-            let p1 = await IndexDbManager.use("test", 1, config);
-            let p2 = await IndexDbManager.use("test2", 1, config);
-            console.log(p1);
-            let dbs = IndexDbManager.showDbs();
-            console.log(`db = ${dbs}`);
-            const obj = await navigator.storage.estimate();
-            console.log(obj);
-            // console.log(Object.getPrototypeOf(dbs[0]).constructor.name);
-        }
-        y();
+        
     </script>
 </body>
 

@@ -11,126 +11,241 @@
 /**
  * @class StoreConfig
  * @description storeConfig for create or delete object store
+ * @property {Map<string, IDBObjectStoreParameters>} createdObjectStore
+ * @property {Array<string>} deletedObjectStoreNames
  */
 class StoreConfig {
     /**
      * @type {Map<string, IDBObjectStoreParameters>}
      * @description createdObjectStore
-     * @property {string} name
-     * @property {IDBObjectStoreParameters} options
      */
     #createdObjectStore = new Map();
 
     /**
-     * @type {Array<string>}
+     * @type {Set<string>}
      */
-    #deletedObjectStoreNames = [];
+    #deletedObjectStoreNames = new Set();
 
+    /**
+     *
+     * @param {string} name
+     * @param {IDBObjectStoreParameters} options
+     * @returns
+     */
     addObjectStore(name, options) {
         this.#createdObjectStore.set(name, options);
         return this;
     }
 
+    /**
+     *
+     * @param {string} name
+     * @returns {StoreConfig}
+     */
     removeAddedObjectStore(name) {
         this.#createdObjectStore.delete(name);
         return this;
     }
 
-    deleteONeObjectStore(name) {
+    addWillDeletedObjectName(name) {
         this.#deletedObjectStoreNames.push(name);
         return this;
     }
 
-    getStoreConfig() {
-        return {
-            createdObjectStore: this.#createdObjectStore,
-            deletedObjectStoreNames: this.#deletedObjectStoreNames
-        }
+    /**
+     * @returns {Set<string>}
+     */
+    get createdObjectStore() {
+        return this.#createdObjectStore;
+    }
+
+    /**
+     * @returns {Array<string>}
+     */
+    get deletedObjectStoreNames() {
+        return this.#deletedObjectStoreNames;
     }
 }
 
-class IndexDbManager {
-    constructor() {
-        throw new Error('IndexDbManager is a static class');
+
+class IndexedDbManager {
+    /**
+     *
+     * @param {string | string[]} a
+     * @param {string | string[]} b
+     * @returns {boolean}
+     */
+    static #isEqualKeyPath(a, b) {
+        if (a === b) return true;
+
+        if (Array.isArray(a) && Array.isArray(b)) {
+            if (a.length !== b.length) return false;
+            return a.every((v, i) => v === b[i]);
+        }
+
+        return false;
     }
 
     /**
-     * @type {Map<string, IDBDatabase>}
-     * @private
-     * @description name2db
-     */
-    static #name2db = new Map();
-
-    /**
-     * @typedef {{name: string, version:number}} T
-     * 
-     * @returns {Promise<Array<T>>}
+     *
+     * @returns {Promise<Array<IDBDatabaseInfo>>}
      */
     static async showDbs() {
         return await indexedDB.databases();
     }
 
     /**
-     * 
-     * @param {string} name 
-     * @returns {Promise<void>}
+     *
+     * @param {string} name
+     * @returns {IDBOpenDBRequest<void>}
      */
     static async dropDb(name) {
         return indexedDB.deleteDatabase(name);
     }
 
     /**
-     * 
-     * @param {string} name 
-     * @returns {}
+     *
+     * @param {IDBObjectStore} store
+     * @param {Array} indexesConfig
+     * @returns {boolean}
      */
-    static async getDb(name) {
-        return this.#name2db.get(name);
+    static #checkIndexes(store, indexesConfig) {
+        if (store.indexNames.length !== indexesConfig.length) {
+            return false;
+        }
+
+        for (const indexConfig of indexesConfig) {
+            const { name, keyPath, options = {} } = indexConfig;
+
+            if (!store.indexNames.contains(name)) {
+                return false;
+            }
+
+            const index = store.index(name);
+
+            if (!this.#isEqualKeyPath(index.keyPath, keyPath)) {
+                return false;
+            }
+
+            if (!!index.unique !== !!options.unique) {
+                return false;
+            }
+
+            if (!!index.multiEntry !== !!options.multiEntry) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
-     * 
-     * @param {string} name 
-     * @param {null} version 
-     * @param {StoreConfig} storeConfig 
+     *
+     * @param {string} name
+     * @returns {IDBDatabase|null}
+     */
+    static async showDb(name) {
+        const dbs = await this.showDbs();
+        console.log(dbs, name);
+        let info = dbs.find((db) => db.name === name);
+        if (!info) {
+            return Promise.resolve(null);
+        }
+        const {_, version} = info;
+        const req = indexedDB.open(name, version);
+        
+        return new Promise((resolve, reject) => {
+            req.onsuccess = (e) => {
+                resolve(e.target.result);
+            };
+
+            req.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    /**
+    * @param {IDBDatabase} db
+    * @param {StoreConfig} storeConfig
+    * @returns {boolean}
+    */
+    static check(db, storeConfig) {
+        const createdStores = storeConfig.createdObjectStore;
+        console.log(db.objectStoreNames);
+        if (createdStores.size !== db.objectStoreNames.length) {
+            return false;
+        }
+
+        for (const [name, option] of createdStores) {
+            if (!db.objectStoreNames.contains(name)) {
+                return false;
+            }
+
+            const tx = db.transaction(name, "readonly");
+            const store = tx.objectStore(name);
+
+            if (!this.#isEqualKeyPath(store.keyPath, option.keyPath)) {
+                return false;
+            }
+
+            if (store.autoIncrement !== !!option.autoIncrement) {
+                return false;
+            }
+
+            if (Array.isArray(option.indexes)) {
+                if (!this.#checkIndexes(store, option.indexes)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+
+    /**
+     *
+     * @param {string} name
+     * @param {null} version
+     * @param {StoreConfig} storeConfig
      * @returns {Promise<IDBDatabase>}
      */
-    static async use(name, version, storeConfig) {
+    static async createOrUpdateDb(name, version, storeConfig) {
         /**
          * @type {IDBDatabase}
          */
         let db = null;
 
-        /**
-         * first check if db exist, by name and version. if yes, return it.
-         */
-        if(this.#name2db.has(name)) {
-            db = this.#name2db.get(name);
-            if (currentDb.version === version) {
-                return Promise.resolve(currentDb);
-            }
-        }
-
         const req = indexedDB.open(name, version);
         return new Promise((resolve, reject) => {
-            req.onsuccess = e => {
-                this.#name2db.set(name, e.target.result);
+            req.onsuccess = (e) => {
                 db = e.target.result;
+                IndexedDbManager.check(db, storeConfig);
                 resolve(db);
             };
 
-            req.onupgradeneeded = e => {
+            req.onupgradeneeded = (e) => {
                 db = e.target.result;
-                storeConfig.getStoreConfig().createdObjectStore.forEach((options, name) => {
-                    const store = db.createObjectStore(name, options);
+                storeConfig.createdObjectStore.forEach((options, storeName) => {
                 });
 
-                storeConfig.getStoreConfig().deletedObjectStoreNames.forEach(name => {
-                    db.deleteObjectStore(name);
+                storeConfig.deletedObjectStoreNames.forEach((storeName) => {
+                    db.deleteObjectStore(storeName);
                 });
-            }
-
-            req.onerror = e => reject(e.target.error);
-        })
+            };
+            req.onerror = (e) => reject(e.target.error);
+        });
     }
 }
+
+
+
+const test = async () => {
+    console.log(indexedDB)
+    const config = new StoreConfig();
+    const db = await IndexedDbManager.createOrUpdateDb("test", 1, config);
+    console.log(db);
+    console.log(await IndexedDbManager.showDbs());
+    console.log(await IndexedDbManager.showDb("tes__t"));
+};
+
+test();

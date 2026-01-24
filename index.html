@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Home</title>
 </head>
 
 <body>
@@ -15,14 +15,14 @@
             "user_info_xx"
         ]
         const y = async () => {
-            let p1 = await IndexDbManager.createDbIntance("test", 1, config);
-            let p2 = await IndexDbManager.createDbIntance("test2", 1, config);
+            let p1 = await IndexDbManager.use("test", 1, config);
+            let p2 = await IndexDbManager.use("test2", 1, config);
             console.log(p1);
-            let dbs = await IndexDbManager.showDb();
-            console.log(dbs);
+            let dbs = IndexDbManager.showDbs();
+            console.log(`db = ${dbs}`);
             const obj = await navigator.storage.estimate();
             console.log(obj);
-            console.log(Object.getPrototypeOf(dbs[0]).constructor.name);
+            // console.log(Object.getPrototypeOf(dbs[0]).constructor.name);
         }
         y();
     </script>

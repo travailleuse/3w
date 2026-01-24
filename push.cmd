@@ -1,3 +1,3 @@
-git push github
-git push gitee
-git push gitcode
+git push github --tags
+git push gitee --tags
+git push gitcode --tags

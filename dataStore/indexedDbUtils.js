@@ -90,12 +90,11 @@ class IndexedDbManager {
      *
      * @returns {Promise<Array<IDBDatabaseInfo>>}
      */
-    static async showDbs() {
+    static async getDbs() {
         return await indexedDB.databases();
     }
 
     /**
-     *
      * @param {string} name
      * @returns {IDBOpenDBRequest<void>}
      */
@@ -144,8 +143,8 @@ class IndexedDbManager {
      * @param {string} name
      * @returns {IDBDatabase|null}
      */
-    static async showDb(name) {
-        const dbs = await this.showDbs();
+    static async getDb(name) {
+        const dbs = await this.getDbs();
         console.log(dbs, name);
         let info = dbs.find((db) => db.name === name);
         if (!info) {
@@ -244,8 +243,8 @@ const test = async () => {
     const config = new StoreConfig();
     const db = await IndexedDbManager.createOrUpdateDb("test", 1, config);
     console.log(db);
-    console.log(await IndexedDbManager.showDbs());
-    console.log(await IndexedDbManager.showDb("tes__t"));
+    console.log(await IndexedDbManager.getDbs());
+    console.log(await IndexedDbManager.getDb("tes__t"));
 };
 
 test();

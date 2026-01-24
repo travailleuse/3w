@@ -11,29 +11,59 @@
 /**
  * @class StoreConfig
  * @description storeConfig for create or delete object store
- * @property {Map<string, IDBObjectStoreParameters>} createdObjectStore
- * @property {Array<string>} deletedObjectStoreNames
+ * @property {Map<string, IDBObjectStoreParameters>} willcreateObjectStore
+ * @property {Set<string>} willdeleteObjectStoreNames
  */
 class StoreConfig {
     /**
+     * @private
      * @type {Map<string, IDBObjectStoreParameters>}
-     * @description createdObjectStore
+     * @description willcreateObjectStore
      */
-    #createdObjectStore = new Map();
+    #willcreateObjectStore = new Map();
 
     /**
+     * @private
      * @type {Set<string>}
+     * @description willdeleteObjectStoreNames
      */
-    #deletedObjectStoreNames = new Set();
+    #willdeleteObjectStoreNames = new Set();
+
+    /** 
+     * @private
+     * @type {Map<string, IDBObjectStoreParameters>}
+     * @description willUpdateObjectStore parameters
+     */
+    #willUpdateObjectStore = new Map();
 
     /**
      *
      * @param {string} name
-     * @param {IDBObjectStoreParameters} options
-     * @returns
+     * @returns {StoreConfig}
      */
-    addObjectStore(name, options) {
-        this.#createdObjectStore.set(name, options);
+    removeAddedObjectStore(name) {
+        if (this.#willcreateObjectStore.size > 0) {
+            this.#willcreateObjectStore.delete(name);
+        }
+        return this;
+    }
+
+    /**
+     * 
+     * @returns {StoreConfig} clear 
+     */
+    clearAddedObjectStore() {
+        this.#willcreateObjectStore.clear();
+        return this;
+    }
+
+    /**
+     * @param {string} name
+     * @param {IDBObjectStoreParameters} options
+     * @returns {StoreConfig}
+     */
+    addObjectStoreConfig(name, options) {
+        this.#willcreateObjectStore.set(name, options);
         return this;
     }
 
@@ -43,27 +73,59 @@ class StoreConfig {
      * @returns {StoreConfig}
      */
     removeAddedObjectStore(name) {
-        this.#createdObjectStore.delete(name);
+        if (this.#willcreateObjectStore.size > 0) {
+            this.#willcreateObjectStore.delete(name);
+        }
+        return this;
+    }
+
+    /**
+     * 
+     * @returns {StoreConfig} clear 
+     */
+    clearAddedObjectStore() {
+        this.#willcreateObjectStore.clear();
         return this;
     }
 
     addWillDeletedObjectName(name) {
-        this.#deletedObjectStoreNames.push(name);
+        this.#willdeleteObjectStoreNames.add(name);
+        return this;
+    }
+
+    /**
+     * 
+     * @param {string} name 
+     * @returns {StoreConfig}
+     */
+    removeWillDeletedObjectName(name) {
+        if (this.#willdeleteObjectStoreNames.size > 0) {
+            this.#willdeleteObjectStoreNames.delete(name);
+        }
+        return this;
+    }
+
+    /**
+     * 
+     * @returns {StoreConfig}
+     */
+    clearWillDeletedObjectName() {
+        this.#willdeleteObjectStoreNames.clear();
         return this;
     }
 
     /**
      * @returns {Set<string>}
      */
-    get createdObjectStore() {
-        return this.#createdObjectStore;
+    get willcreateObjectStore() {
+        return this.#willcreateObjectStore;
     }
 
     /**
      * @returns {Array<string>}
      */
-    get deletedObjectStoreNames() {
-        return this.#deletedObjectStoreNames;
+    get willdeleteObjectStoreNames() {
+        return this.#willdeleteObjectStoreNames;
     }
 }
 
@@ -154,11 +216,11 @@ class IndexedDbManager {
         const req = indexedDB.open(name, version);
         
         return new Promise((resolve, reject) => {
-            req.onsuccess = (e) => {
+            req.onsuccess = e => {
                 resolve(e.target.result);
             };
 
-            req.onerror = (e) => reject(e.target.error);
+            req.onerror = e => reject(e.target.error);
         });
     }
 
@@ -168,7 +230,7 @@ class IndexedDbManager {
     * @returns {boolean}
     */
     static check(db, storeConfig) {
-        const createdStores = storeConfig.createdObjectStore;
+        const createdStores = storeConfig.willcreateObjectStore;
         console.log(db.objectStoreNames);
         if (createdStores.size !== db.objectStoreNames.length) {
             return false;
@@ -216,22 +278,23 @@ class IndexedDbManager {
 
         const req = indexedDB.open(name, version);
         return new Promise((resolve, reject) => {
-            req.onsuccess = (e) => {
+            req.onsuccess = e => {
                 db = e.target.result;
                 IndexedDbManager.check(db, storeConfig);
                 resolve(db);
             };
 
-            req.onupgradeneeded = (e) => {
+            req.onupgradeneeded = e => {
                 db = e.target.result;
-                storeConfig.createdObjectStore.forEach((options, storeName) => {
+                storeConfig.willcreateObjectStore.forEach((options, storeName) => {
+                    const store = db.createObjectStore(storeName, options);
                 });
 
-                storeConfig.deletedObjectStoreNames.forEach((storeName) => {
+                storeConfig.willdeleteObjectStoreNames.forEach((storeName) => {
                     db.deleteObjectStore(storeName);
                 });
             };
-            req.onerror = (e) => reject(e.target.error);
+            req.onerror = e => reject(e.target.error);
         });
     }
 }
@@ -239,12 +302,8 @@ class IndexedDbManager {
 
 
 const test = async () => {
-    console.log(indexedDB)
-    const config = new StoreConfig();
     const db = await IndexedDbManager.createOrUpdateDb("test", 1, config);
     console.log(db);
-    console.log(await IndexedDbManager.getDbs());
-    console.log(await IndexedDbManager.getDb("tes__t"));
 };
 
 test();

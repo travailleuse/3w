@@ -5,199 +5,310 @@
  * @license Apache-2.0
  * @version 1.0.0
  * @copyright Copyright (c) 2026 travailleuse
+ * 
+ * @typedef {string | string[]} KeyPathType
+ * @typedef {{option?: IDBObjectStoreParameters, indexes?: Map<string, {keyPath:KeyPathType, options?:IDBIndexParameters?}>}} StoreConfig
+ * @typedef {Map<string, StoreConfig>} IDBConfig
  */
-
 
 /**
- * @class StoreConfig
- * @description storeConfig for create or delete object store
- * @property {Map<string, IDBObjectStoreParameters>} willcreateObjectStore
- * @property {Set<string>} willdeleteObjectStoreNames
+ * @typedef {{op: "create"}} C
+ * @typedef {{"op":"update", mode:"merge"| "replace"}} U
+ * @typedef {{op : "delete"}} D
+ * @typedef {C | U | D} IDBCtxOpType
+ * @typedef {"create" | "delete"} DeleteType
  */
-class StoreConfig {
+class IDBOPCtx {
     /**
-     * @private
-     * @type {Map<string, IDBObjectStoreParameters>}
-     * @description willcreateObjectStore
+     * @type {boolean}
      */
-    #willcreateObjectStore = new Map();
+    #hasFinished = false;
+    /**
+     * @type {string}
+     */
+    #name;
+    /**
+     * @type {number}
+     */
+    #version;
+    /**
+     * @type {IDBDatabase|null}
+     */
+    #currDB;
 
     /**
-     * @private
+     * @type {IDBConfig}
+     */
+    #createStores = new Map();
+
+    /**
      * @type {Set<string>}
-     * @description willdeleteObjectStoreNames
      */
-    #willdeleteObjectStoreNames = new Set();
-
-    /** 
-     * @private
-     * @type {Map<string, IDBObjectStoreParameters>}
-     * @description willUpdateObjectStore parameters
-     */
-    #willUpdateObjectStore = new Map();
+    #deleteObjectStoreNames = new Set();
 
     /**
-     *
-     * @param {string} name
-     * @returns {StoreConfig}
+     * @type {IDBConfig}
      */
-    removeAddedObjectStore(name) {
-        if (this.#willcreateObjectStore.size > 0) {
-            this.#willcreateObjectStore.delete(name);
-        }
-        return this;
+    #updateStores = new Map();
+    constructor(name, version, currDB) {
+        this.#name = name;
+        this.#version = version;
+        this.#currDB = currDB;
+        console.log(this.getCurDBconfig());
     }
 
     /**
-     * 
-     * @returns {StoreConfig} clear 
+     * @returns {boolean}
      */
-    clearAddedObjectStore() {
-        this.#willcreateObjectStore.clear();
-        return this;
+    get hasFinished() {
+        return this.#hasFinished;
     }
 
-    /**
-     * @param {string} name
-     * @param {IDBObjectStoreParameters} options
-     * @returns {StoreConfig}
-     */
-    addObjectStoreConfig(name, options) {
-        this.#willcreateObjectStore.set(name, options);
-        return this;
-    }
-
-    /**
-     *
-     * @param {string} name
-     * @returns {StoreConfig}
-     */
-    removeAddedObjectStore(name) {
-        if (this.#willcreateObjectStore.size > 0) {
-            this.#willcreateObjectStore.delete(name);
-        }
-        return this;
-    }
 
     /**
      * 
-     * @returns {StoreConfig} clear 
+     * @returns {IDBConfig}
      */
-    clearAddedObjectStore() {
-        this.#willcreateObjectStore.clear();
-        return this;
-    }
-
-    addWillDeletedObjectName(name) {
-        this.#willdeleteObjectStoreNames.add(name);
-        return this;
+    getCurDBconfig() {
+        return IDBManager.getDBConfig(this.#currDB);
     }
 
     /**
      * 
      * @param {string} name 
-     * @returns {StoreConfig}
+     * @param {IDBCtxOpType} opType 
+     * @param {IDBObjectStoreParameters?} option 
      */
-    removeWillDeletedObjectName(name) {
-        if (this.#willdeleteObjectStoreNames.size > 0) {
-            this.#willdeleteObjectStoreNames.delete(name);
+    createStore(name, opType, option) {
+        let currConfig = this.getCurDBconfig();
+        if (currConfig && currConfig.has(name)) {
+            throw new Error("this store already exists.");
         }
-        return this;
+        if (opType.op === "create") {
+            this.#createStores.set(name, { option, });
+            this.#deleteObjectStoreNames.delete(name);
+            return this;
+        }
+
+        if (opType.op === "delete") {
+            this.#createStores.delete(name);
+            return this;
+        }
+        if (opType.op !== "update") {
+            throw new Error("invalid opType");
+        }
+        switch (opType.mode) {
+            case "replace":
+                this.#createStores.set(name, { option, });
+                this.#deleteObjectStoreNames.delete(name);
+                break;
+            case "merge":
+                if (!option) {
+                    option = {};
+                } else {
+                    let config = currConfig.get(name).option;
+                    if (!option.hasOwnProperty("keyPath")) {
+                        option["keyPath"] = config.keyPath;
+                    }
+                    if (!option.hasOwnProperty("autoIncrement")) {
+                        option["autoIncrement"] = !!config.autoIncrement;
+                    }
+                }
+                this.#createStores.set(name, { option, });
+                break;
+            default:
+                throw new Error("invalid mode");
+        }
+    }
+
+
+    /**
+     * 
+     * @param {string} name 
+     * @param {IDBCtxOpType} opType 
+     * @param {IDBObjectStoreParameters?} option 
+     */
+    updateStore(name, opType, option) {
+        let currConfig = this.getCurDBconfig();
+        if (!currConfig || !currConfig.has(name) || this.#updateStores.has(name)) {
+            throw new Error("this store doesn't exist.");
+        }
+
+        if (opType.op === "create") {
+            this.#updateStores.set(name, { option, });
+            this.#deleteObjectStoreNames.delete(name);
+        }
+
+        if (opType.op === "delete") {
+            this.#updateStores.delete(name);
+        }
+
+        if (opType.op !== "update") {
+            throw new Error("invalid opType");
+        }
+
+        switch (opType.mode) {
+            case "replace":
+                this.#updateStores.set(name, { option, });
+                this.#deleteObjectStoreNames.delete(name);
+                break;
+            case "merge":
+                if (!option) {
+                    option = {};
+                } else {
+                    let config = currConfig.get(name).option;
+                    if (!option.hasOwnProperty("keyPath")) {
+                        option["keyPath"] = config.keyPath;
+                    }
+                    if (!option.hasOwnProperty("autoIncrement")) {
+                        option["autoIncrement"] = !!config.autoIncrement;
+                    }
+                }
+                this.#updateStores.set(name, { option, });
+                break;
+            default:
+                throw new Error("invalid mode");
+        }
     }
 
     /**
      * 
-     * @returns {StoreConfig}
+     * @param {string} name 
+     * @param {DeleteType} opType 
+     * @returns 
      */
-    clearWillDeletedObjectName() {
-        this.#willdeleteObjectStoreNames.clear();
-        return this;
+    deleteStore(name, opType) {
+        let currConfig = this.getCurDBconfig();
+        if (!currConfig || !currConfig.has(name)) {
+            throw new Error("this store doesn't exist.");
+        }
+
+        if (opType === "create") {
+            this.#deleteObjectStoreNames.add(name);
+            this.#updateStores.delete(name);
+            this.#createStores.delete(name);
+            return this;
+        }
+        if (opType === "delete") {
+            this.#deleteObjectStoreNames.delete(name);
+            return this;
+        }
+        throw new Error("invalid opType");
+
+    }
+
+
+    #clearCtx() {
+        this.#hasFinished = true;
+        this.#createStores.clear();
+        this.#deleteObjectStoreNames.clear();
+        this.#updateStores.clear();
     }
 
     /**
-     * @returns {Set<string>}
+     * 
+     * @returns {IDBDatabase}
      */
-    get willcreateObjectStore() {
-        return this.#willcreateObjectStore;
-    }
+    async build() {
+        if (this.#currDB) {
+            await this.#currDB?.close();
+        }
 
-    /**
-     * @returns {Array<string>}
-     */
-    get willdeleteObjectStoreNames() {
-        return this.#willdeleteObjectStoreNames;
+        return new Promise((resolve, reject) => {
+            /**
+             * @type {IDBDatabase|null}
+             */
+            let db = null;
+
+            // if not change
+            if (this.#currDB && !this.#deleteObjectStoreNames.size && !this.#createStores.size && !this.#updateStores.size) {
+                resolve(this.#currDB);
+                return;
+            }
+
+            const req = indexedDB.open(this.#name, this.#version);
+            req.onsuccess = e => {
+                this.#clearCtx();
+                db = e.target.result;
+                resolve(db);
+            };
+
+            req.onupgradeneeded = e => {
+                db = e.target.result;  
+
+                this.#createStores.forEach(({ option, indexes }, name) => {
+                    const store = db.createObjectStore(name, option);
+                    console.log("create store: " + name);
+                });
+
+
+                this.#deleteObjectStoreNames.forEach(name => {
+                    console.log("delete store: " + name);
+                    db.deleteObjectStore(name);
+                });
+            };
+
+
+            req.onerror = e => {
+                console.error("Error opening the database:", e.target.error);
+                reject(e.target.error); 
+            };
+        });
     }
 }
 
 
-class IndexedDbManager {
+class IDBManager {
+
     /**
      *
-     * @param {string | string[]} a
-     * @param {string | string[]} b
-     * @returns {boolean}
+     * 
+     * @param {IDBDatabase|null} currDB 
+     * @returns {IDBConfig}
      */
-    static #isEqualKeyPath(a, b) {
-        if (a === b) return true;
-
-        if (Array.isArray(a) && Array.isArray(b)) {
-            if (a.length !== b.length) return false;
-            return a.every((v, i) => v === b[i]);
+    static getDBConfig(currDB) {
+        if (!currDB) {
+            return null;
+        }
+        const res = new Map();
+        for (const name of currDB.objectStoreNames) {
+            const store = currDB.transaction(name, "readonly").objectStore(name);
+            res.set(name, {
+                option: {
+                    keyPath: store.keyPath,
+                    autoIncrement: store.autoIncrement,
+                },
+                indexes: Array.from(store.indexNames).map(name => {
+                    const index = store.index(name);
+                    const map = new Map();
+                    map.set(index.name, {
+                        keyPath: index.keyPath,
+                        options: {
+                            unique: index.unique,
+                            multiEntry: index.multiEntry,
+                        },
+                    });
+                    return map;
+                }),
+            });
         }
 
-        return false;
+        return res;
     }
-
     /**
      *
      * @returns {Promise<Array<IDBDatabaseInfo>>}
      */
-    static async getDbs() {
-        return await indexedDB.databases();
+    static getDBs() {
+        return indexedDB.databases();
     }
 
     /**
      * @param {string} name
      * @returns {IDBOpenDBRequest<void>}
      */
-    static async dropDb(name) {
+    static async dropDB(name) {
         return indexedDB.deleteDatabase(name);
-    }
-
-    /**
-     *
-     * @param {IDBObjectStore} store
-     * @param {Array} indexesConfig
-     * @returns {boolean}
-     */
-    static #checkIndexes(store, indexesConfig) {
-        if (store.indexNames.length !== indexesConfig.length) {
-            return false;
-        }
-
-        for (const indexConfig of indexesConfig) {
-            const { name, keyPath, options = {} } = indexConfig;
-
-            if (!store.indexNames.contains(name)) {
-                return false;
-            }
-
-            const index = store.index(name);
-
-            if (!this.#isEqualKeyPath(index.keyPath, keyPath)) {
-                return false;
-            }
-
-            if (!!index.unique !== !!options.unique) {
-                return false;
-            }
-
-            if (!!index.multiEntry !== !!options.multiEntry) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -205,16 +316,14 @@ class IndexedDbManager {
      * @param {string} name
      * @returns {IDBDatabase|null}
      */
-    static async getDb(name) {
-        const dbs = await this.getDbs();
-        console.log(dbs, name);
+    static async getDB(name) {
+        const dbs = await this.getDBs();
         let info = dbs.find((db) => db.name === name);
         if (!info) {
             return Promise.resolve(null);
         }
-        const {_, version} = info;
+        const { _, version } = info;
         const req = indexedDB.open(name, version);
-        
         return new Promise((resolve, reject) => {
             req.onsuccess = e => {
                 resolve(e.target.result);
@@ -224,85 +333,31 @@ class IndexedDbManager {
         });
     }
 
-    /**
-    * @param {IDBDatabase} db
-    * @param {StoreConfig} storeConfig
-    * @returns {boolean}
-    */
-    static check(db, storeConfig) {
-        const createdStores = storeConfig.willcreateObjectStore;
-        console.log(db.objectStoreNames);
-        if (createdStores.size !== db.objectStoreNames.length) {
-            return false;
-        }
-
-        for (const [name, option] of createdStores) {
-            if (!db.objectStoreNames.contains(name)) {
-                return false;
-            }
-
-            const tx = db.transaction(name, "readonly");
-            const store = tx.objectStore(name);
-
-            if (!this.#isEqualKeyPath(store.keyPath, option.keyPath)) {
-                return false;
-            }
-
-            if (store.autoIncrement !== !!option.autoIncrement) {
-                return false;
-            }
-
-            if (Array.isArray(option.indexes)) {
-                if (!this.#checkIndexes(store, option.indexes)) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
 
     /**
-     *
-     * @param {string} name
-     * @param {null} version
-     * @param {StoreConfig} storeConfig
-     * @returns {Promise<IDBDatabase>}
+     * 
+     * @param {string} name 
+     * @returns {IDBOPCtx}
      */
-    static async createOrUpdateDb(name, version, storeConfig) {
+    static async createIDBOpCtx(name) {
         /**
          * @type {IDBDatabase}
+         * check the db whose name is is dbName exists or not.
          */
-        let db = null;
-
-        const req = indexedDB.open(name, version);
-        return new Promise((resolve, reject) => {
-            req.onsuccess = e => {
-                db = e.target.result;
-                IndexedDbManager.check(db, storeConfig);
-                resolve(db);
-            };
-
-            req.onupgradeneeded = e => {
-                db = e.target.result;
-                storeConfig.willcreateObjectStore.forEach((options, storeName) => {
-                    const store = db.createObjectStore(storeName, options);
-                });
-
-                storeConfig.willdeleteObjectStoreNames.forEach((storeName) => {
-                    db.deleteObjectStore(storeName);
-                });
-            };
-            req.onerror = e => reject(e.target.error);
-        });
+        const db = await IDBManager.getDB(name);
+        const version = db ? db.version + 1 : 1;
+        return new IDBOPCtx(name, version, db);
     }
 }
 
 
 
 const test = async () => {
-    const db = await IndexedDbManager.createOrUpdateDb("test", 1, config);
+    const dbOpCtx = await IDBManager.createIDBOpCtx("test");
+    dbOpCtx.deleteStore("class", "create");
+    const t = await dbOpCtx.getCurDBconfig();
+    console.log(t);
+    const db = await dbOpCtx.build();
     console.log(db);
 };
 

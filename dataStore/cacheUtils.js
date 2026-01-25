@@ -1,5 +1,8 @@
 window.caches.open('my-cache').then(function(cache) {
-  cache.add("a");
+    cache.addAll([
+        'dataStore/cacheUtils.js'
+    ])
+    console.log('cache ready');
 });
 
 

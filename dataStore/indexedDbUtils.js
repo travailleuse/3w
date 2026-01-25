@@ -18,6 +18,7 @@
  * @typedef {C | U | D} IDBCtxOpType
  * @typedef {"create" | "delete"} DeleteType
  */
+
 class IDBOPCtx {
     /**
      * @type {boolean}
@@ -137,10 +138,12 @@ class IDBOPCtx {
         if (opType.op === "create") {
             this.#updateStores.set(name, { option, });
             this.#deleteObjectStoreNames.delete(name);
+            return this;
         }
 
         if (opType.op === "delete") {
             this.#updateStores.delete(name);
+            return this;
         }
 
         if (opType.op !== "update") {
@@ -169,6 +172,8 @@ class IDBOPCtx {
             default:
                 throw new Error("invalid mode");
         }
+
+        return this;
     }
 
     /**
@@ -354,8 +359,8 @@ class IDBManager {
 
 const test = async () => {
     const dbOpCtx = await IDBManager.createIDBOpCtx("test");
-    dbOpCtx.deleteStore("class", "create");
     const t = await dbOpCtx.getCurDBconfig();
+    dbOpCtx.updateStore("score", {op:"create"} ,{keyPath: "name", autoIncrement: true});
     console.log(t);
     const db = await dbOpCtx.build();
     console.log(db);

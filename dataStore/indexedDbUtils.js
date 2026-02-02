@@ -55,7 +55,6 @@ class IDBOPCtx {
         this.#name = name;
         this.#version = version;
         this.#currDB = currDB;
-        console.log(this.getCurDBconfig());
     }
 
     /**
@@ -105,7 +104,7 @@ class IDBOPCtx {
                 break;
             case "merge":
                 if (!option) {
-                    option = {};
+                    option = Object.create(null);
                 } else {
                     let config = currConfig.get(name).option;
                     if (!option.hasOwnProperty("keyPath")) {
@@ -215,10 +214,6 @@ class IDBOPCtx {
      * @returns {IDBDatabase}
      */
     async build() {
-        if (this.#currDB) {
-            await this.#currDB?.close();
-        }
-
         return new Promise((resolve, reject) => {
             /**
              * @type {IDBDatabase|null}
@@ -230,7 +225,6 @@ class IDBOPCtx {
                 resolve(this.#currDB);
                 return;
             }
-
             const req = indexedDB.open(this.#name, this.#version);
             req.onsuccess = e => {
                 this.#clearCtx();
@@ -241,14 +235,25 @@ class IDBOPCtx {
             req.onupgradeneeded = e => {
                 db = e.target.result;  
 
+                db.onversionchange = (e) => {
+                    db.close();
+                };
+
                 this.#createStores.forEach(({ option, indexes }, name) => {
                     const store = db.createObjectStore(name, option);
-                    console.log("create store: " + name);
+                });
+
+
+                this.#updateStores.forEach(({ option, indexes }, name) => {
+                    const tx = db.transaction(name, "readonly");
+                    const st = tx.objectStore(name);
+                    const cursor = st.openCursor();
+                    const store = db.deleteObjectStore(name);
+                    db.createObjectStore(name, option);
                 });
 
 
                 this.#deleteObjectStoreNames.forEach(name => {
-                    console.log("delete store: " + name);
                     db.deleteObjectStore(name);
                 });
             };
@@ -331,6 +336,7 @@ class IDBManager {
         const req = indexedDB.open(name, version);
         return new Promise((resolve, reject) => {
             req.onsuccess = e => {
+                e.target.result.onversionchange = () => e.target.result.close();
                 resolve(e.target.result);
             };
 
@@ -360,8 +366,7 @@ class IDBManager {
 const test = async () => {
     const dbOpCtx = await IDBManager.createIDBOpCtx("test");
     const t = await dbOpCtx.getCurDBconfig();
-    dbOpCtx.updateStore("score", {op:"create"} ,{keyPath: "name", autoIncrement: true});
-    console.log(t);
+    dbOpCtx.createStore(Date.now().toString(),{"op":"create"}, {"keyPath": "id", "autoIncrement": true});
     const db = await dbOpCtx.build();
     console.log(db);
 };

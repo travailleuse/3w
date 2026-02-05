@@ -64,7 +64,6 @@ class IDBOPCtx {
         return this.#hasFinished;
     }
 
-
     /**
      * 
      * @returns {IDBConfig}
@@ -79,7 +78,7 @@ class IDBOPCtx {
      * @param {IDBCtxOpType} opType 
      * @param {IDBObjectStoreParameters?} option 
      */
-    createStore(name, opType, option) {
+    createObjectStore(name, opType, option) {
         let currConfig = this.getCurDBconfig();
         if (currConfig && currConfig.has(name)) {
             throw new Error("this store already exists.");
@@ -128,7 +127,7 @@ class IDBOPCtx {
      * @param {IDBCtxOpType} opType 
      * @param {IDBObjectStoreParameters?} option 
      */
-    updateStore(name, opType, option) {
+    updateObjectStore(name, opType, option) {
         let currConfig = this.getCurDBconfig();
         if (!currConfig || !currConfig.has(name) || this.#updateStores.has(name)) {
             throw new Error("this store doesn't exist.");
@@ -181,7 +180,7 @@ class IDBOPCtx {
      * @param {DeleteType} opType 
      * @returns 
      */
-    deleteStore(name, opType) {
+    deleteObjectStore(name, opType) {
         let currConfig = this.getCurDBconfig();
         if (!currConfig || !currConfig.has(name)) {
             throw new Error("this store doesn't exist.");
@@ -220,11 +219,14 @@ class IDBOPCtx {
              */
             let db = null;
 
-            // if not change
-            if (this.#currDB && !this.#deleteObjectStoreNames.size && !this.#createStores.size && !this.#updateStores.size) {
+            // if not change, use old db, not need to open.
+            if (this.#currDB &&
+                !this.#deleteObjectStoreNames.size &&
+                !this.#createStores.size && !this.#updateStores.size) {
                 resolve(this.#currDB);
                 return;
             }
+
             const req = indexedDB.open(this.#name, this.#version);
             req.onsuccess = e => {
                 this.#clearCtx();
@@ -247,7 +249,6 @@ class IDBOPCtx {
                 this.#updateStores.forEach(({ option, indexes }, name) => {
                     const tx = db.transaction(name, "readonly");
                     const st = tx.objectStore(name);
-                    const cursor = st.openCursor();
                     const store = db.deleteObjectStore(name);
                     db.createObjectStore(name, option);
                 });
@@ -366,7 +367,8 @@ class IDBManager {
 const test = async () => {
     const dbOpCtx = await IDBManager.createIDBOpCtx("test");
     const t = await dbOpCtx.getCurDBconfig();
-    dbOpCtx.createStore(Date.now().toString(),{"op":"create"}, {"keyPath": "id", "autoIncrement": true});
+    dbOpCtx.createObjectStore(Date.now().toString(),{"op":"create"}, {"keyPath": "id", "autoIncrement": true});
+    dbOpCtx.createIdx();
     const db = await dbOpCtx.build();
     console.log(db);
 };

@@ -1,5 +1,6 @@
 #include <stdlib.h>
-#define MAX_SIZE ((size_t)0xffff)
+
+#define _VEC_MAX_SIZE ((size_t)0xffff)
 
 typedef struct Vec {
     void **data;
@@ -7,6 +8,11 @@ typedef struct Vec {
     size_t cap;
 } Vec;
 
-Vec *createVec(size_t cap);
+Vec *vecCreate(size_t cap);
 
-int append(void *);
+void vecDestroy(Vec *vec);
+
+int vecInsert(Vec *vec, void *data, size_t idx);
+
+void testVec();
+

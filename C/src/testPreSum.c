@@ -34,7 +34,11 @@ void timeEscapeWrapper(void (*handler)(), const char *func) {
 }
 
 static void *workForInitTestData(void *args) {
+    clock_t st, en;
+    st = clock();
     size_t s = ((QueryParam *) args)->l;
+
+    printf("No. %zu, begin workForInitTestData\n", s);
 
     size_t sd = s * (_TEST_MAX_SIZE / _TEST_NUM_THS);
     size_t sp = s * (_TEST_MAX_PARAM / _TEST_NUM_THS);
@@ -54,6 +58,10 @@ static void *workForInitTestData(void *args) {
         }
     }
 
+    en = clock();
+    double t = (en - st) * 1.00 / CLOCKS_PER_SEC * 1000;
+
+    printf("No. %zu, end workForInitTestData, takes %.2f(ms)\n", s, t);
 
     return NULL;
 }
@@ -114,6 +122,11 @@ static void *workForTestOrdinaryMul(void *args) {
     QueryParam *param = (QueryParam *) args;
 
     QueryParam *p = _params + param->l, *q = _params + param->r;
+    size_t s = param->l / (_TEST_MAX_PARAM / _TEST_NUM_THS);
+    clock_t st, en;
+    printf("No. %zu, begin workForInitTestData\n", s);
+    st = clock();
+
     size_t l = 0, r = 0;
     int *pp = NULL, *qq = NULL;
     while (p < q) {
@@ -125,7 +138,10 @@ static void *workForTestOrdinaryMul(void *args) {
         while (pp <= qq)s += *pp++;
         ++p;
     }
+    en = clock();
+    double t = (en - st) * 1.00 / CLOCKS_PER_SEC * 1000;
 
+    printf("No. %zu, end workForInitTestData, takes %.2f(ms)\n", s, t);
     return NULL;
 }
 

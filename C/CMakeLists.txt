@@ -4,5 +4,5 @@ project(C C)
 set(CMAKE_C_STANDARD 17)
 
 
-add_executable(C main.c src/Vec.c src/testPreSum.c)
+add_executable(C main.c src/Vec.c src/testPreSum.c src/testCreateFile.c)
 

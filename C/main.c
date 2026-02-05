@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "include/Vec.h"
 #include "include/testPreSum.h"
+#include "include/testCreateFile.h"
 
 #include <windows.h>
 #include <psapi.h>
@@ -19,8 +20,7 @@ void getMemoryUsage() {
 
 
 int main(void) {
-    testAllPre();
-    printf_s("--------\n");
-    getMemoryUsage();
+
+    timeEscapeWrapper(testAll, "testAll");
     return 0;
 }

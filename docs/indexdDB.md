@@ -56,10 +56,9 @@ const testIndexDB = async () => {
 }
 ```
 
-增加`onversionchange`监听器，在里面`db.close()`.
+增加`onversionchange`监听器，在里面`db.close()`，数据库升级的时候，需要关闭旧版本的`indexedDB`实例，否则数据库被`blocked`。
 
 ```javascript
-
 const getDB = (name, version) => {
     const req = indexedDB.open("test", version);
     return new Promise((resolve, reject) => {
@@ -67,6 +66,10 @@ const getDB = (name, version) => {
             console.log("onsuccess");
             resolve(e.target.result);
         };
+        
+        req.onblocked = e => {
+            reject(e.target.error);
+        }
 
         req.onupgradeneeded = (e) => {
             /**
@@ -96,5 +99,14 @@ const testIndexDB = async () => {
 }
 
 testIndexDB();
+```
+
+如下代码，`db2`永远不会打开。``
+
+```javascript
+const testIndexDB = async () => { 
+    const db = await getDB("ui", 1);
+    const db2 = await getDB("ui", 2);
+}
 ```
 

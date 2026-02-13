@@ -24,14 +24,6 @@ void swap(void *a, void *b, size_t E, size_t N) {
     }
 }
 
-void timeEscapeWrapper(void (*handler)(), const char *func) {
-    clock_t s, e;
-    s = clock();
-    handler();
-    e = clock();
-    double t = (e - s) * 1.0 / CLOCKS_PER_SEC;
-    printf("[%s] takes %.2f ms.\n", func, t * 1000);
-}
 
 static void *workForInitTestData(void *args) {
     clock_t st, en;
@@ -198,9 +190,9 @@ void testPreSumMul() {
 }
 
 void testAllPre() {
-    timeEscapeWrapper(initTestData, "initTestData");
-    timeEscapeWrapper(testOrdinary, "testOrdinary");
-    timeEscapeWrapper(testPreSum, "testPreSum");
-    timeEscapeWrapper(testOrdinaryMul, "testOrdinaryMul");
-    timeEscapeWrapper(testPreSumMul, "testPreSumMul");
+    timeEscapeWrapper(initTestData);
+    timeEscapeWrapper(testOrdinary);
+    timeEscapeWrapper(testPreSum);
+    timeEscapeWrapper(testOrdinaryMul);
+    timeEscapeWrapper(testPreSumMul);
 }

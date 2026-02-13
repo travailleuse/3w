@@ -1,9 +1,10 @@
 
 const getDB = (name, version) => {
-    const req = indexedDB.open("test", version);
+    const req = indexedDB.open(name, version);
     return new Promise((resolve, reject) => {
         req.onsuccess = (e) => {
             console.log("onsuccess");
+            console.log(e.target.result);
             resolve(e.target.result);
         };
 
@@ -20,6 +21,12 @@ const getDB = (name, version) => {
             console.log("onupgradeneeded");
         };
         req.onerror = (e) => reject(e.target.error);
+
+        req.onblocked = e => {
+            console.log("blocked");
+            console.log(e.target)
+            reject(e.target.error);
+        }
     });
 }
 
@@ -27,11 +34,9 @@ const getDB = (name, version) => {
 
 const testIndexDB = async () => { 
     const db = await getDB("test", 1);
-    console.log(db);
-    console.log(db);
-    const db_ = await getDB("test", 2);
-    console.log(db_);
-
+    getDB("test", 2).catch(e=>{
+        console.log(e);
+    });
 }
 
 testIndexDB();

@@ -32,7 +32,7 @@ void *workForGenData(void *args) {
         fputs("\n", file->fp);
     }
     e = clock();
-    double t = (e - s) * 1.8 / CLOCKS_PER_SEC * 1000;
+    double t = (e - s) * 1.00 / CLOCKS_PER_SEC * 1000;
     printf("file %s genData end, takes %.2lf (ms)\n", file->name, t);
 
     return NULL;
@@ -62,7 +62,7 @@ void * workerForRead(void *args) {
 
     }
     e = clock();
-    double t = (e - s) * 1.8 / CLOCKS_PER_SEC * 1000;
+    double t = (e - s) * 1.00 / CLOCKS_PER_SEC * 1000;
     printf("file %s readData end, takes %.2lf (ms)\n", file->name, t);
 }
 void readFiles() {
@@ -95,9 +95,9 @@ void removeAllFiles() {
 
 
 void testAll() {
-    timeEscapeWrapper(createFile, "createFile");
-    timeEscapeWrapper(generateRandomInt, "generateRandomInt");
-    timeEscapeWrapper(readFiles, "readFiles");
-    timeEscapeWrapper(closeAllFile, "closeAllFile");
-    timeEscapeWrapper(removeAllFiles, "removeAllFiles");
+    timeEscapeWrapper(createFile);
+    timeEscapeWrapper(generateRandomInt);
+    timeEscapeWrapper(readFiles);
+    timeEscapeWrapper(closeAllFile);
+    timeEscapeWrapper(removeAllFiles);
 }

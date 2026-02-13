@@ -19,11 +19,7 @@ const db2version = async () => {
 const getDB = async (name) => {
     const op = await db2version();
     let version = op.get(name);
-    if (version === undefined) {
-        version = 1;
-    } else {
-        ++version;
-    }
+    version = version === (void 0) ? 1 : version + 1;
     const req = indexedDB.open(name, version);
     return new Promise((resolve, reject) => {
         req.onsuccess = e => {
@@ -42,11 +38,11 @@ const getDB = async (name) => {
              * @type {IDBDatabase}
              */
             const db = e.target.result;
-            db.createObjectStore("test", {keyPath:["id", "name"]});
-            console.log(db);
+            db.createObjectStore("test", {keyPath:"id", autoIncrement:true});
         }
 
         req.onblocked = e => {
+            console.log("blocked");
             reject(e.target.error);
         }
 
@@ -57,7 +53,8 @@ const getDB = async (name) => {
 }
 
 const test = async () => {
-   const db = await getDB("test");
+    const db = await getDB("test");
+    console.log(db);
 }
 
 test()

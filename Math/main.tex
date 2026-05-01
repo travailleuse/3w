@@ -1,0 +1,45 @@
+\documentclass{ctexart}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\setCJKmainfont{SimSun}
+
+
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage[format=hang,font=small,textfont=it]{caption}
+\usepackage{float}
+\usepackage{subcaption}
+
+\usetikzlibrary{calc}
+\newcommand{\dis}{\displaystyle}
+\newcommand{\Zs}{\mathbb{Z}}% 整数集合
+\newcommand{\Qs}{\mathbb{Q}}% 有理数集合
+\newcommand{\Rs}{\mathbb{R}}% 实数集合
+\newcommand{\Cs}{\mathbb{C}}% 复数集合
+\newcommand{\diff}[1][x]{\mathrm{d}#1}% 微分
+\newcommand{\pa}[1][]{\partial{#1}}
+
+\numberwithin{figure}{section}
+
+\renewcommand{\thefigure}{\thesection-\arabic{figure}}
+
+
+
+\title{\heiti 数学}
+\author{\itshape 王蕊\\math\`{e}maticienne}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\input{algebra}
+
+
+
+\input{geometry}
+\input{analysis}
+\end{document}

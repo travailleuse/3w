@@ -1,28 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIE</title>
+    <title>DIE - 3D 骰子</title>
     <style>
-        .die {
-            /* width: 100%;
-            height: 300px;
-            display: flex;
-            justify-content: space-evenly; */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a2e;
+            font-family: 'Segoe UI', sans-serif;
+            perspective: 1000px;
+        }
 
+        /* ── 3D 场景 ── */
+        .scene {
+            width: 200px;
+            height: 200px;
+            perspective: 1000px;
+            cursor: grab;
+        }
+
+        .scene:active {
+            cursor: grabbing;
+        }
+
+        .cube {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .cube.shaking {
+            animation: shake3d 0.6s ease-in-out;
+        }
+
+        @keyframes shake3d {
+            0%   { transform: rotateX(0deg) rotateY(0deg); }
+            10%  { transform: rotateX(20deg) rotateY(-30deg) rotateZ(10deg); }
+            25%  { transform: rotateX(-30deg) rotateY(40deg) rotateZ(-15deg); }
+            40%  { transform: rotateX(35deg) rotateY(-20deg) rotateZ(8deg); }
+            55%  { transform: rotateX(-20deg) rotateY(50deg) rotateZ(-10deg); }
+            70%  { transform: rotateX(25deg) rotateY(-35deg) rotateZ(12deg); }
+            85%  { transform: rotateX(-15deg) rotateY(20deg) rotateZ(-5deg); }
+            100% { transform: rotateX(0deg) rotateY(0deg); }
+        }
+
+        /* ── 六个面（用户原始点阵结构） ── */
         .face {
+            position: absolute;
+            width: 200px;
+            height: 200px;
             display: flex;
             justify-content: space-evenly;
             box-sizing: border-box;
-            width: 200px;
-            height: 200px;
-            background-color: #ccc;
-            margin: 20px;
+            background-color: #f5f5f5;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow:
+                inset 0 0 0 2px rgba(0,0,0,0.06),
+                inset 0 0 20px rgba(0,0,0,0.04);
+            backface-visibility: hidden;
         }
 
         .col {
@@ -44,78 +93,236 @@
         }
 
         .dot {
-            width: 50px;
-            height: 50px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            background-color: red;
-            align-self: flex-start;
+            background: radial-gradient(circle at 35% 35%, #444, #111);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* ── 3D 位置变换 ── */
+        .face:nth-child(1) { /* 1点 — 正面 */
+            transform: translateZ(100px);
+        }
+        .face:nth-child(2) { /* 2点 — 右面 */
+            transform: rotateY(90deg) translateZ(100px);
+        }
+        .face:nth-child(3) { /* 3点 — 上面 */
+            transform: rotateX(-90deg) translateZ(100px);
+        }
+        .face:nth-child(4) { /* 4点 — 下面 */
+            transform: rotateX(90deg) translateZ(100px);
+        }
+        .face:nth-child(5) { /* 5点 — 左面 */
+            transform: rotateY(-90deg) translateZ(100px);
+        }
+        .face:nth-child(6) { /* 6点 — 背面 */
+            transform: rotateY(180deg) translateZ(100px);
+        }
+
+        /* ── 控件 ── */
+        .controls {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .roll-btn {
+            padding: 14px 48px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #e94560, #c23152);
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
+            transition: transform 0.12s, box-shadow 0.2s;
+            letter-spacing: 2px;
+        }
+
+        .roll-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(233, 69, 96, 0.5);
+        }
+
+        .roll-btn:active {
+            transform: scale(0.96);
+        }
+
+        .result {
+            font-size: 24px;
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 1px;
+        }
+
+        .result strong {
+            color: #e94560;
+            font-size: 32px;
         }
     </style>
 </head>
 
 <body>
-    <div class="die">
-        <div class="face">
-            <div class="col">
-                <div class="dot"></div>
-            </div>
-        </div>
-        <div class="face">
-            <div class="col">
-                <div class="dot start"></div>
-            </div>
-            <div class="col">
-                <div class="dot"></div>
-            </div>
-        </div>
-        <div class="face">
-            <div class="col">
-                <div class="dot"></div>
-            </div>
-            <div class="col">
-                <div class="dot"></div>
-            </div>
-            <div class="col">
-                <div class="dot"></div>
-            </div>
-        </div>
-        <div class="face">
-            <div class="col">
-                <div class="dot"></div>
-                <div class="dot"></div>
-            </div>
-            <div class="col">
-                <div class="dot"></div>
-                <div class="dot"></div>
-            </div>
-        </div>
-        <div class="face">
-            <div class="col">
-                <div class="dot"></div>
-                <div class="dot"></div>
-            </div>
-            <div class="col">
-                <div class="dot"></div>
-            </div>
-            <div class="col">
-                <div class="dot"></div>
-                <div class="dot"></div>
-            </div>
-        </div>
 
-        <div class="face">
-            <div class="col">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
+    <div class="scene" id="scene">
+        <div class="cube" id="cube">
+            <!-- 面 1 ⚀ 中心一点 -->
+            <div class="face">
+                <div class="col">
+                    <div class="dot center"></div>
+                </div>
             </div>
-            <div class="col">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
+
+            <!-- 面 2 ⚁ 右上 + 左下 -->
+            <div class="face">
+                <div class="col">
+                    <div class="dot start"></div>
+                </div>
+                <div class="col">
+                    <div class="dot end"></div>
+                </div>
+            </div>
+
+            <!-- 面 3 ⚂ 右上 + 中 + 左下 -->
+            <div class="face">
+                <div class="col">
+                    <div class="dot start"></div>
+                </div>
+                <div class="col">
+                    <div class="dot center"></div>
+                </div>
+                <div class="col">
+                    <div class="dot end"></div>
+                </div>
+            </div>
+
+            <!-- 面 4 ⚃ 四角 -->
+            <div class="face">
+                <div class="col">
+                    <div class="dot start"></div>
+                    <div class="dot end"></div>
+                </div>
+                <div class="col">
+                    <div class="dot start"></div>
+                    <div class="dot end"></div>
+                </div>
+            </div>
+
+            <!-- 面 5 ⚄ 四角 + 中心 -->
+            <div class="face">
+                <div class="col">
+                    <div class="dot start"></div>
+                    <div class="dot end"></div>
+                </div>
+                <div class="col">
+                    <div class="dot center"></div>
+                </div>
+                <div class="col">
+                    <div class="dot start"></div>
+                    <div class="dot end"></div>
+                </div>
+            </div>
+
+            <!-- 面 6 ⚅ 左三 + 右三 -->
+            <div class="face">
+                <div class="col">
+                    <div class="dot start"></div>
+                    <div class="dot center"></div>
+                    <div class="dot end"></div>
+                </div>
+                <div class="col">
+                    <div class="dot start"></div>
+                    <div class="dot center"></div>
+                    <div class="dot end"></div>
+                </div>
             </div>
         </div>
     </div>
+
+    <div class="controls">
+        <button class="roll-btn" id="rollBtn">🎲 掷骰子</button>
+        <div class="result">点数：<strong id="resultDisplay">-</strong></div>
+    </div>
+
+    <script>
+        (function () {
+            const cube = document.getElementById('cube');
+            const rollBtn = document.getElementById('rollBtn');
+            const resultDisplay = document.getElementById('resultDisplay');
+
+            // 标准骰子：对面之和 = 7
+            // 布局: 1前 2右 3上 4下 5左 6背
+            const faceAngles = [
+                { x: 0, y: 0 },           // 1 正面
+                { x: 0, y: -90 },          // 2 右面
+                { x: 90, y: 0 },           // 3 上面
+                { x: -90, y: 0 },          // 4 下面
+                { x: 0, y: 90 },           // 5 左面
+                { x: 0, y: 180 },          // 6 背面
+            ];
+
+            function showFace(num) {
+                const angle = faceAngles[num - 1];
+                cube.style.transform = `rotateX(${angle.x}deg) rotateY(${angle.y}deg)`;
+            }
+
+            function rollDice() {
+                rollBtn.disabled = true;
+                resultDisplay.textContent = '?';
+
+                // 摇骰动画（随机晃几下）
+                cube.classList.add('shaking');
+
+                const result = Math.floor(Math.random() * 6) + 1;
+
+                setTimeout(() => {
+                    cube.classList.remove('shaking');
+                    showFace(result);
+                    resultDisplay.textContent = result;
+                    rollBtn.disabled = false;
+                }, 700);
+            }
+
+            rollBtn.addEventListener('click', rollDice);
+
+            // ── 鼠标拖拽旋转 ──
+            let isDragging = false;
+            let prevX, prevY;
+            let rotX = -20, rotY = -30;
+
+            const scene = document.getElementById('scene');
+
+            scene.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                prevX = e.clientX;
+                prevY = e.clientY;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - prevX;
+                const dy = e.clientY - prevY;
+                rotY += dx * 0.5;
+                rotX -= dy * 0.5;
+                cube.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+                prevX = e.clientX;
+                prevY = e.clientY;
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // 初始视角
+            cube.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+        })();
+    </script>
 </body>
 
 </html>

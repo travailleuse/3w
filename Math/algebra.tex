@@ -7,7 +7,7 @@ a_n, b_n\)都是小于\(10\)的非负整数，那么当\(i\in\Zs\)时，\(c_i = 
 这个解释了加法的进一的原因。
 
 设\(\dis d = a - b = \sum_{n\in\Zs}^{}d_n10^n\)，\(d_i = a_i - b_i\)，当\(d_i<0\)时，
-设\(d_i = s - 10\)，代入\(10d_i = 10^ns- 10^{n+1}\)。这解释了减法借十的原因。
+令\(d_i = a_i + 10 - b_i\)，即借一位给第 \(i\) 位，同时 \(d_{i+1}\) 减 \(1\)。这解释了减法借位的原因。
 
 \subsection{基本不等式}
 我们都知道基本不等式\(\dis \frac{a+b}{2}\ge\sqrt{ab},a\ge0, b\ge0\)，当且仅当\(a=b\)时区等号。
@@ -45,29 +45,22 @@ a_n, b_n\)都是小于\(10\)的非负整数，那么当\(i\in\Zs\)时，\(c_i = 
 
 的，把\(G(S, \circ)\)称为\textbf{群}。\textbf{群不一定满足交换律}，即可能\(a\circ b \ne b \circ a\).满足交换律的群称为交换群，也叫\textbf{阿贝尔群}。
 
-下面证明群的单位元始唯一的，即\(e_l = e_r\)
+下面证明群的单位元是唯一的，即\(e_l = e_r\)
 \begin{proof}
-    \begin{align*}
-        e_l = e_le_re_r = e_re_r = e_r
-    \end{align*}
+    设 \(e_l\) 为左单位元，\(e_r\) 为右单位元，则
+    \[
+    e_l = e_l \circ e_r = e_r
+    \]
+    所以左单位元与右单位元相等，单位元唯一。
 \end{proof}
 
-下面证明每个元素的逆元的唯一的
+下面证明每个元素的逆元是唯一的
 \begin{proof}
-    我们先证明：
-    \(
-    a^{-1}\circ a = a \circ a^{-1} = e
-    \)
-
+    设 \(x, y\) 都是 \(a\) 的逆元，则：
     \[
-    a\circ(a^{-1}\circ a) = (a\circ a^{-1})\circ a= e
-    \]\
-   \hfill\textbf{证完}
-   
-    设\(x, y\)都是\(a\)的逆元，则：
-    \[
-    x = ex = (ya)x = y(ax) = y
+    x = e \circ x = (y \circ a) \circ x = y \circ (a \circ x) = y \circ e = y
     \]
+    所以逆元唯一。
 \end{proof}
 
 
@@ -102,7 +95,7 @@ a_n, b_n\)都是小于\(10\)的非负整数，那么当\(i\in\Zs\)时，\(c_i = 
 
 \begin{itemize}
     \item \(z_1z_2=r_1r_2(\cos(\theta_1+\theta_2) + \mathrm{i}\sin(\theta_1+\theta_2))\)
-    \item \(\dis \frac{z_1}{z_2} = \frac{r_1}{r_1}(\cos(\theta_1-\theta_2) + \mathrm{i}\sin(\theta_1-\theta_2))\)
+    \item \(\dis \frac{z_1}{z_2} = \frac{r_1}{r_2}(\cos(\theta_1-\theta_2) + \mathrm{i}\sin(\theta_1-\theta_2))\)
 \end{itemize}
 
 可以得出\(\dis |z_1z_2| = |z_1||z_2|,\ \left|\frac{z_1}{z_2}\right| = \frac{|z_1|}{|z_2|}\)

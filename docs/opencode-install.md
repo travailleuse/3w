@@ -9,7 +9,7 @@ nvm use {LTS_version}# 使用LTS
 nvm current # 显示当前版本号
 ```
 
-![nvm 可用版本](node.assets/image-20260426170124601.png)
+![nvm 可用版本](./opencode-install.assets/image-20260426170124601.png)
 
 ## 安装`nrm`
 

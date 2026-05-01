@@ -22,8 +22,8 @@
     \end{tikzpicture}
     \caption{\(\dis
     \left\{\begin{matrix} 
-    \sin(\alpha - \beta) = \sin\alpha\cos\beta -\sin\beta\cos\beta\\
-  \cos(\alpha - \beta)=\cos\alpha\cos\beta + \sin\alpha\cos\beta
+    \sin(\alpha - \beta) = \sin\alpha\cos\beta -\cos\alpha\sin\beta\\
+  \cos(\alpha - \beta)=\cos\alpha\cos\beta + \sin\alpha\sin\beta
 \end{matrix}\right.
     \)的几何证明}
     \label{fig:sin-cos-substract-proof}
@@ -36,14 +36,14 @@ P_1T\perp OP_2,\ P_1T_1\perp Ox,\ P_2T_2\perp Ox
 则：
 \begin{align*}
     \sin(\alpha - \beta) &= P_1T\\
-    = \sin\alpha\cos\beta &-\sin\beta\cos\beta
+    = \sin\alpha\cos\beta &-\cos\alpha\sin\beta
 \end{align*}
 
 \begin{align*}
     \cos(\alpha - \beta)&=OP + PT\\
     =\frac{\cos\alpha}{\cos\beta} &+ (\sin\alpha -\cos\alpha\tan\beta)\sin\beta
     \\=\frac{(\sin^2\beta + \cos^2\beta)\cos\alpha}{\cos\beta}&+\frac{\sin\alpha\sin\beta\cos\beta - \sin^2\beta\cos\alpha}{\cos\beta}
-     \\=\cos\alpha\cos\beta &+ \sin\alpha\cos\beta
+     \\=\cos\alpha\cos\beta &+ \sin\alpha\sin\beta
 \end{align*}
 
 
@@ -88,7 +88,7 @@ DB = \tan\alpha,CB=\tan\beta,CD=\tan\alpha - \tan\beta
 \end{figure}
 设外心的坐标为$T(a, b)$, 则
 \begin{align*}
-    (a - \frac{x_1-x_0}{2}, b-\frac{y_1-y_0}{2})&\cdot
+    (a - \frac{x_1+x_0}{2}, b-\frac{y_1+y_0}{2})&\cdot
 (x_1-x_0, y_1-y_0) = 0\\
 (a - \frac{x_2-x_0}{2}, b-\frac{y_2-y_0}{2})&\cdot
 (x_2-x_0, y_2-y_0) = 0\\

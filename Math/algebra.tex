@@ -1,6 +1,6 @@
 \section{代数}
 \subsection{十进制加减法}
-任意的十进制数字可以写成\(\dis\sum_{n\in\Zs}^{}a_n10^n\)，其中\(a_n\in \{0\le a_n\l\le10 \left| a_n\in\Zs\right.\}\)
+任意的十进制数字可以写成\(\dis\sum_{n\in\Zs}^{}a_n10^n\)，其中\(a_n\in \{0\le a_n\le9 \left| a_n\in\Zs\right.\}\)
 
 设任意两个整数\(\dis a = \sum_{n\in\Zs}^{}a_n10^n, b = \sum_{n\in\Zs}^{}b_n10^n\)，令\(\dis c = a + b = \sum_{n\in\Zs}^{}c_n10^n\)，其中\(
 a_n, b_n\)都是小于\(10\)的非负整数，那么当\(i\in\Zs\)时，\(c_i = a_i + b_i\)，当\(c_i \ge 10\)时，令\(c_i = 10 + s\)，带入\(10^nc_i = 10^{n+1} + 10^ns\)，可以看出，\(c_{i+1}\)加了\(1\).
@@ -10,7 +10,7 @@ a_n, b_n\)都是小于\(10\)的非负整数，那么当\(i\in\Zs\)时，\(c_i = 
 令\(d_i = a_i + 10 - b_i\)，即借一位给第 \(i\) 位，同时 \(d_{i+1}\) 减 \(1\)。这解释了减法借位的原因。
 
 \subsection{基本不等式}
-我们都知道基本不等式\(\dis \frac{a+b}{2}\ge\sqrt{ab},a\ge0, b\ge0\)，当且仅当\(a=b\)时区等号。
+我们都知道基本不等式\(\dis \frac{a+b}{2}\ge\sqrt{ab},a\ge0, b\ge0\)，当且仅当\(a=b\)时取等号。
 \begin{proof}\itshape
 \[
     (\sqrt{a}-\sqrt{b})^2=a+b-2\sqrt{ab}\ge0 \Rightarrow \frac{a+b}{2}\ge \sqrt{ab}
@@ -30,7 +30,7 @@ a_n, b_n\)都是小于\(10\)的非负整数，那么当\(i\in\Zs\)时，\(c_i = 
     \label{fig:basic-ineq-proof}
 \end{figure}
 
-如上图所示，\(\odot O, AB\perp PT, AT\cdot TB = (OP+OT)(OP-OA) = OP^2-OA^2 = PT^2\)，即
+如上图所示，\(\odot O, AB\perp PT, AT\cdot TB = (OP+OT)(OP-OT) = OP^2-OT^2 = PT^2\)，即
 \(\dis \sqrt{AT\cdot TB} = PT\le \frac{AT + TB}{2} = OP\)
 \end{proof}
 
@@ -39,7 +39,7 @@ a_n, b_n\)都是小于\(10\)的非负整数，那么当\(i\in\Zs\)时，\(c_i = 
 \begin{itemize}
     \item 对于\(\forall a, b\in S\)，都满足\(a\circ b = c\in S\)；
     \item 对于\(\forall a, b, c\in S\)，都满足\((a\circ b)\circ c = a\circ(b\circ c)\)；
-    \item 存在单位元，即幺元:\(e\in S\).对与\(\forall a\in S\)，都有\(e \circ a = a\)；
+    \item 存在单位元，即幺元:\(e\in S\).对于\(\forall a\in S\)，都有\(e \circ a = a\)；
     \item 每个元素\(a\)都存在逆元素\(a^{-1}\in S\).有\(a^{-1}\circ a = e\)
 \end{itemize}
 
@@ -68,7 +68,7 @@ a_n, b_n\)都是小于\(10\)的非负整数，那么当\(i\in\Zs\)时，\(c_i = 
 
 虚数单位\(\mathrm{i}\)，即\(\mathrm{i}^2=-1\)，是方程\(x^2+1=0\)其中一个解.
 
-所有的复数（\(\Cs\)）都可以表示成\(z=a+b\mathrm{i}\)的形式，其中\(a\)为为复数\(z\)的实部，
+所有的复数（\(\Cs\)）都可以表示成\(z=a+b\mathrm{i}\)的形式，其中\(a\)为复数\(z\)的实部，
 记作\(a = \mathrm{Re}\ z\).\ \(b\)为虚部，记作\(b=\mathrm{Im}\ z\)，其中\(\overline{z}=a-b\mathrm{i}\)表示复数\(z\)的共轭复数。
 \begin{figure}[htbp]
     \centering
@@ -87,8 +87,8 @@ a_n, b_n\)都是小于\(10\)的非负整数，那么当\(i\in\Zs\)时，\(c_i = 
 
 复数的加减运算
 \begin{itemize}
-    \item \(z_1 + z_2 = (a+b\mathrm{i}) + (c + d\mathrm{i}) = (a+b)+(c+d)\mathrm{i}\)
-    \item \(z_1 - z_2 = (a+b\mathrm{i}) - (c + d\mathrm{i}) = (a-b)+(c-d)\mathrm{i}\)
+    \item \(z_1 + z_2 = (a+b\mathrm{i}) + (c + d\mathrm{i}) = (a+c)+(b+d)\mathrm{i}\)
+    \item \(z_1 - z_2 = (a+b\mathrm{i}) - (c + d\mathrm{i}) = (a-c)+(b-d)\mathrm{i}\)
 \end{itemize}
 
 下面讨论复数的乘除法

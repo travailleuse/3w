@@ -1,5 +1,11 @@
 # 介绍
 
+## 项目的仓库
+
+- gitcode git@gitcode.com:travailleuse/3w.git
+- github git@github.com:travailleuse/3w.git
+- gitee git@gitee.com:travailleuse/3w.git
+
 ## 文件目录机构
 
 刚刚写这个项目，`indexedDB`是Web的数据库，我模仿`mangoDb`的写法实现了些许功能。

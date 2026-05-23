@@ -2,10 +2,11 @@
 $remotes = @(
     @{ Name = "GitHub";  Remote = "github" },
     @{ Name = "GitCode"; Remote = "gitcode" },
-    @{ Name = "Gitee";   Remote = "gitee" }
+    @{ Name = "Gitee";   Remote = "gitee" },
+    @{ Name = "GitLab";  Remote = "gitlab" }
 )
 
-Write-Host "`nPushing to 3 remotes in parallel..." -ForegroundColor Cyan
+Write-Host "`nPushing to 4 remotes in parallel..." -ForegroundColor Cyan
 
 $jobs = foreach ($r in $remotes) {
     Start-Job -ScriptBlock {

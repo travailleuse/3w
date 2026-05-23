@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. **`Math/`** — LaTeX 数学笔记，xelatex 编译
 3. **`C/`** — C 语言实验/基准测试，CMake + C17 + pthread
 
-详细参考文档在 [`ref-for-ai/`](ref-for-ai/) 和 [`AGENTS.md`](AGENTS.md)。
+详细参考文档在 [`ref-for-ai/`](ref-for-ai/)（含 commands.md、git-workflow.md、math.md、project-structure.md） 
 
 ## 开发命令
 
@@ -37,9 +37,10 @@ python -m http.server
 ## Git 工作流
 
 - **提交信息**：中文
+- **提交命令**：`git commit -s -m "消息"`（`-s` 添加 Signed-off-by），**禁止**自动附加 `Co-Authored-By` 尾注
 - **分支**：仅 `main`，无 develop/feature 分支
-- **远程仓库**：4 个（github、gitcode、gitee、gitlab），内容同步
-- **推送**：`.\push.ps1`（并行）或 `.\push.cmd`（串行）
+- **远程仓库**：4 个（github、gitcode、gitee、gitlab），内容同步，配置见 `remote.ini`
+- **推送**：`.\push.ps1`（并行）或 `.\push.cmd`（串行）。推送前，先对照 `remote.ini` 检查各远程仓库的 URL 是否匹配，确认无误后再执行
 
 ## Math 笔记约定
 

@@ -14,6 +14,8 @@
 
 ## 推送
 
+推送前，先对照 `remote.ini` 检查各远程仓库 URL 是否匹配，确认无误后再执行。
+
 ```powershell
 # 并行推送（推荐）
 .\push.ps1
@@ -25,4 +27,5 @@
 ## 约定
 
 - 提交信息使用中文
+- 提交命令使用 `git commit -s -m "消息"`（`-s` 添加 Signed-off-by），**禁止**附加 `Co-Authored-By` 尾注
 - 仅 main 分支，无 develop/feature 分支

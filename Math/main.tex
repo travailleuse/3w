@@ -10,9 +10,15 @@
 
 \usepackage{graphicx}
 \usepackage{tikz}
-\usepackage[format=hang,font=small,textfont=it]{caption}
+\usepackage[format=hang,font=small,labelsep=space]{caption}
+\DeclareCaptionFont{kaishu}{\kaishu}
+\captionsetup{labelfont=kaishu,textfont=kaishu}
 \usepackage{float}
 \usepackage{subcaption}
+
+\makeatletter
+\renewcommand{\fnum@figure}{\figurename\thefigure}
+\makeatother
 
 \usetikzlibrary{calc}
 \newcommand{\dis}{\displaystyle}
@@ -35,11 +41,16 @@
 
 \begin{document}
 \maketitle
+\thispagestyle{empty}
+\newpage
+\pagenumbering{Roman}
 \tableofcontents
+\newpage
+\pagenumbering{arabic}
 \input{algebra}
 
-
-
+\newpage
 \input{geometry}
+\newpage
 \input{analysis}
 \end{document}

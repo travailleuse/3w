@@ -20,11 +20,11 @@ a_n, b_n\)都是小于\(10\)的非负整数，那么当\(i\in\Zs\)时，\(c_i = 
     \centering
     \begin{tikzpicture}
         \draw(2,0) arc(0:180:2);
-        \draw(-2, 0)node[below]{$A$}--(2, 0)node[below]{$B$};
-        \node[below] at(0,0){$O$};
-        \draw(0, 0) --(45:2) node[above right]{$P$};
+        \draw(-2, 0)node[below]{\(A\)}--(2, 0)node[below]{\(B\)};
+        \node[below] at(0,0){\(O\)};
+        \draw(0, 0) --(45:2) node[above right]{\(P\)};
         \draw(2,0)--(45:2)--(-2,0);
-        \draw[dashed](45:2)--(45:2|-0,0)node[below]{$T$};
+        \draw[dashed](45:2)--(45:2|-0,0)node[below]{\(T\)};
     \end{tikzpicture}
     \caption{均值不等式的几何证明}
     \label{fig:basic-ineq-proof}
@@ -70,16 +70,16 @@ a_n, b_n\)都是小于\(10\)的非负整数，那么当\(i\in\Zs\)时，\(c_i = 
 
 所有的复数（\(\Cs\)）都可以表示成\(z=a+b\mathrm{i}\)的形式，其中\(a\)为复数\(z\)的实部，
 记作\(a = \mathrm{Re}\ z\).\ \(b\)为虚部，记作\(b=\mathrm{Im}\ z\)，其中\(\overline{z}=a-b\mathrm{i}\)表示复数\(z\)的共轭复数。
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}
-        \draw[->] (-2, 0)--(0,0) node[below left]{$O$}--(2, 0)node[below]{$x$};
-        \draw[->](0, -2)--(0, 2) node[right]{$y$};
-        \draw[->>](0, 0)--(1.5, 1) node[above]{$Z(a, b)$};
-        \draw[dashed](1.5, 1)--(1.5, 0)node[below]{$a$};
-        \draw[dashed](1.5, 1)--(0, 1)node[left]{$b$};
+        \draw[->] (-2, 0)--(0,0) node[below left]{\(O\)}--(2, 0)node[below]{\(x\)};
+        \draw[->](0, -2)--(0, 2) node[right]{\(y\)};
+        \draw[->>](0, 0)--(1.5, 1) node[above]{\(Z(a, b)\)};
+        \draw[dashed](1.5, 1)--(1.5, 0)node[below]{\(a\)};
+        \draw[dashed](1.5, 1)--(0, 1)node[left]{\(b\)};
     \end{tikzpicture}
-    \caption{复数$z$}
+    \caption{复数\(z\)}
     \label{fig:complex-plane}
 \end{figure}
 
